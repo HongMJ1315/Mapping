@@ -24,58 +24,7 @@ void reshape(GLFWwindow *window, int w, int h){
     width = w;  height = h;
 }
 
-
-
-int main(int argc, char *argv[]){
-    glutInit(&argc, argv);
-    if(!glfwInit()){
-        return -1;
-    }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow *window = glfwCreateWindow(width, height, "Hw1", nullptr, nullptr);
-    if(!window){
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-    glfwSetWindowSizeCallback(window, reshape);
-
-
-
-    if(!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)){
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-    glfwSetWindowSizeCallback(window, reshape);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetCursorPosCallback(window, cursor_pos_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-
-
-    reshape(window, width, height);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    std::cout << "GLFW version: " << glfwGetVersionString() << std::endl;
-    const GLubyte *glslVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
-    const GLubyte *renderer = glGetString(GL_RENDERER);
-    const GLubyte *version = glGetString(GL_VERSION);
-    std::cout << "GLSL version: " << glslVersion << std::endl;
-    std::cout << "Renderer: " << renderer << std::endl;
-    std::cout << "OpenGL version supported: " << version << std::endl;
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 400");
-
-
-
+void dataset_ver(GLFWwindow* window){
     datasets = Datasets(DATASETS);
 
     int datasets_size = datasets.get_size();
@@ -126,7 +75,7 @@ int main(int argc, char *argv[]){
     int dim = down_dim.get_feature_size();  // should be 3
     if(dim != 3){
         std::cerr << "Error: PCA output dimension must be 3, got " << dim << std::endl;
-        return -1;
+        return;
     }
 
     // 2. Gather vertex data
@@ -180,13 +129,13 @@ int main(int argc, char *argv[]){
     // 6. Render loop
     while(!glfwWindowShouldClose(window)){
         sammon.train();
-        Datasets nd = sammon.get_new_data(down_dim);
+        sammon.get_new_data(down_dim);
         // 在 Gather vertex data 之后，建立一个 interleaved buffer：
             // 每个点： x, y, z,   r, g, b
         std::vector<float> interleaved;
         interleaved.reserve(pointCount * 6);
         for(int i = 0; i < pointCount; ++i){
-            auto d = nd.get_data(i);
+            auto d = down_dim.get_data(i);
             // 位置
             interleaved.push_back((float) d.feature[0]);
             interleaved.push_back((float) d.feature[1]);
@@ -234,6 +183,65 @@ int main(int argc, char *argv[]){
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+}
+
+void eigen_ver(){
+
+}
+
+
+
+int main(int argc, char *argv[]){
+    glutInit(&argc, argv);
+    if(!glfwInit()){
+        return -1;
+    }
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    GLFWwindow *window = glfwCreateWindow(width, height, "Hw1", nullptr, nullptr);
+    if(!window){
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
+    glfwSetWindowSizeCallback(window, reshape);
+
+
+
+    if(!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)){
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+    glfwSetWindowSizeCallback(window, reshape);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetCursorPosCallback(window, cursor_pos_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
+
+    reshape(window, width, height);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    std::cout << "GLFW version: " << glfwGetVersionString() << std::endl;
+    const GLubyte *glslVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    const GLubyte *renderer = glGetString(GL_RENDERER);
+    const GLubyte *version = glGetString(GL_VERSION);
+    std::cout << "GLSL version: " << glslVersion << std::endl;
+    std::cout << "Renderer: " << renderer << std::endl;
+    std::cout << "OpenGL version supported: " << version << std::endl;
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 400");
+
+    dataset_ver(window);
+
 
     glfwTerminate();
     return 0;

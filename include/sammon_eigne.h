@@ -4,13 +4,9 @@
 #include <cstdlib>
 #include <vector>
 
-#include "pca.h"
+#include "pca_eigen.h"
 
-#include "Eigen/Eigen"
-#include "Eigen/Core"
-#include "Eigen/Dense"
-
-class Sammon{
+class SammonEigen{
 private:
     int dataset_size;
     int feature_size;
@@ -28,7 +24,7 @@ private:
     double get_dis(Eigen::VectorXd, Eigen::VectorXd);
 
 public:
-    Sammon(Datasets &, int, int, double, double, double);
+    SammonEigen(DatasetsEigen &, int, int, double, double, double);
     void train();
-    void get_new_data(Datasets&);
+    void get_new_data(DatasetsEigen &);
 };

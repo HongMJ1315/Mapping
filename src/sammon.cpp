@@ -52,6 +52,7 @@ Sammon::Sammon(Datasets &data, int new_dim, int max_iter, double lr, double alph
     }
     this->c = 1.f / sum_dp;
 
+    /*
     this->ori_mtx = Eigen::MatrixXd(dataset_size, data.get_feature_size());
     for(int i = 0; i < dataset_size; i++){
         Datasets::Data d = data.get_data(i);
@@ -59,6 +60,10 @@ Sammon::Sammon(Datasets &data, int new_dim, int max_iter, double lr, double alph
             ori_mtx(i, j) = d.feature[j];
         }
     }
+    // */
+
+    this->ori_mtx = Eigen::MatrixXd::Random(dataset_size, data.get_feature_size());
+
 }
 
 
@@ -139,19 +144,19 @@ void Sammon::train(){
     // 8) 更新 Y
     Y.noalias() += (2.0 * c * lr) * G;
 
-    std::cout << cnt << std::endl;
+    std::cout << cnt << " " << lr << std::endl;
 
     // （可选）重心平移，保持云团围绕原点
     // Eigen::RowVectorXd center = Y.colwise().mean();
     // Y.rowwise()  -= center;
 
     // 9) 衰减学习率、计数
-    lr *= alpha;
     ++cnt;
+    if(cnt % 50 == 0)
+        lr *= alpha;
 }
 
-Datasets Sammon::get_new_data(Datasets &old){
-    Datasets ret(dataset_size, feature_size);
+void Sammon::get_new_data(Datasets &old){
     for(int i = 0; i < dataset_size; i++){
         std::vector<double> feature(feature_size);
         Datasets::Data d = old.get_data(i);
@@ -160,8 +165,6 @@ Datasets Sammon::get_new_data(Datasets &old){
             // std::cout << feature[j] << " ";
         }
         // std::cout << std::endl;
-        ret.set_dataset_feature(i, feature);
-        ret.set_dataset_target(i, d.target);
+        old.set_dataset_feature(i, feature);
     }
-    return ret;
 }
