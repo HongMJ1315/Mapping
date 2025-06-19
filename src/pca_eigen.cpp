@@ -38,6 +38,9 @@ void pca_eigen(DatasetsEigen &hd, DatasetsEigen &td){
 
     // 8. 把结果写回到 td：先重新构造 td，再赋值
     td = DatasetsEigen(n, k);
-    td.set_feature(std::move(Y));
-    td.set_target(std::move(T));
+    // std::cout << td.get_feature << std::endl;
+    std::cout << n << " " << Y.rows() << std::endl;
+    std::cout << k << " " << Y.cols() << std::endl;
+    td.set_feature(Y);
+    td.set_target(T);
 }

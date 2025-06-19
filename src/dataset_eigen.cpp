@@ -4,6 +4,7 @@ DatasetsEigen::DatasetsEigen(){}
 
 DatasetsEigen::DatasetsEigen(int data_size, int feature_size){
     this->feature_size = feature_size;
+    this->dataset_size = data_size;
     feature_mtx = Eigen::MatrixXd(data_size, feature_size);
     target_vect = Eigen::VectorXd(data_size);
 }
@@ -17,11 +18,11 @@ DatasetsEigen::DatasetsEigen(char *filename){
     }
     this->dataset_size = 0;
     char garbage;
-    file >> dataset_size; file >> garbage;
+    file >> this->dataset_size; file >> garbage;
 
     file >> this->feature_size; file >> garbage;
     this->feature_size--;
-    std::cout << dataset_size << " " << this->feature_size << std::endl;
+    std::cout << this->dataset_size << " " << this->feature_size << std::endl;
 
     feature_mtx = Eigen::MatrixXd(dataset_size, feature_size);
     target_vect = Eigen::VectorXd(dataset_size);
@@ -43,11 +44,11 @@ DatasetsEigen::DatasetsEigen(char *filename){
 }
 
 int DatasetsEigen::get_size(){
-    return dataset_size;
+    return this->dataset_size;
 }
 
 int DatasetsEigen::get_feature_size(){
-    return feature_size;
+    return this->feature_size;
 }
 
 Eigen::MatrixXd DatasetsEigen::get_feature(){
@@ -62,12 +63,14 @@ void DatasetsEigen::set_feature(Eigen::MatrixXd feature){
     if(feature.rows() == this->feature_mtx.rows() &&
         feature.cols() == this->feature_mtx.cols())
         this->feature_mtx = feature;
-    std::cout << "Set feature Error" << std::endl;
+    else
+        std::cout << "Set feature Error" << std::endl;
 }
 
 void DatasetsEigen::set_target(Eigen::VectorXd target){
     if(target.size() == this->target_vect.size()){
         this->target_vect = target;
     }
-    std::cout << "Set target Error" << std::endl;
+    else
+        std::cout << "Set target Error" << std::endl;
 }

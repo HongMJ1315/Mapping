@@ -8,6 +8,7 @@
 #include "glsl.h"
 #include "GLinclude.h"
 #include "sammon.h"
+#include "sammon_eigen.h"
 #include "vao.h"
 #include "mouse.h"
 
@@ -24,7 +25,7 @@ void reshape(GLFWwindow *window, int w, int h){
     width = w;  height = h;
 }
 
-void dataset_ver(GLFWwindow* window){
+void dataset_ver(GLFWwindow *window){
     datasets = Datasets(DATASETS);
 
     int datasets_size = datasets.get_size();
@@ -186,10 +187,93 @@ void dataset_ver(GLFWwindow* window){
 
 }
 
-void eigen_ver(){
+// Render loop entry point using DatasetsEigen and SammonEigen
+void dataset_eigen_ver(GLFWwindow *window){
+    // 1. Load data
+    DatasetsEigen hd(DATASETS);
+    int N = hd.get_size();
 
+    // 2. PCA to 3D
+    DatasetsEigen pca_out(N, 3);
+    pca_eigen(hd, pca_out);
+    // std::cout << "pca init done" << std::endl;
+    std::cout << pca_out.get_size() << std::endl;
+    // 3. Sammon mapping
+    SammonEigen sam(pca_out, 3, 10000, 0.9, 0.9, 1e-6);
+    std::cout << "sammon init done" << std::endl;
+
+    // 4. Setup OpenGL objects
+    Shader shader("shader/shader.vs", "shader/shader.fs");
+    VertexArray va;
+    // initial interleaved buffer
+    std::vector<float> buf;
+    buf.reserve(N * 6);
+    for(int i = 0; i < N; ++i){
+        auto v = pca_out.get_feature().row(i).eval(); // Eigen::Vector3d
+        buf.insert(buf.end(), { float(v.x()), float(v.y()), float(v.z()) });
+        float t = pca_out.get_target()(i) == 0 ? 0.0f : 1.0f;
+        buf.insert(buf.end(), { t, 0.0f, 1.0f - t });
+    }
+    va.bind();
+    va.setVertexBuffer(buf, GL_DYNAMIC_DRAW);
+    va.setAttribPointer(0, 3, GL_FLOAT, 6 * sizeof(float), (void *) 0);
+    va.setAttribPointer(1, 3, GL_FLOAT, 6 * sizeof(float), (void *) (3 * sizeof(float)));
+    va.unbind();
+
+    // 5. Camera setup omitted…
+    int width = 800, height = 600;
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), float(width) / height, 0.1f, 100.0f);
+    glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0.0f), glm::vec3(0, 1, 0));
+    glm::mat4 model = glm::mat4(1.0f);
+
+
+    std::cout << "start" << std::endl;
+
+    // 6. Render loop
+    while(!glfwWindowShouldClose(window)){
+        sam.train();
+        sam.get_new_data(pca_out);
+
+        // update buffer
+        buf.clear();
+        for(int i = 0; i < N; ++i){
+            auto v = pca_out.get_feature().row(i).eval();
+            buf.insert(buf.end(), { float(v.x()), float(v.y()), float(v.z()) });
+            float t = pca_out.get_target()(i) == 0 ? 0.0f : 1.0f;
+            buf.insert(buf.end(), { t, 0.0f, 1.0f - t });
+        }
+        va.bind();
+        va.updateVertexBuffer(buf);
+        va.unbind();
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        shader.use();
+        float camX = radius * cos(pitch) * sin(yaw);
+        float camY = radius * sin(pitch);
+        float camZ = radius * cos(pitch) * cos(yaw);
+        glm::mat4 view = glm::lookAt(
+            glm::vec3(camX, camY, camZ), // camera position
+            glm::vec3(0.0f, 0.0f, 0.0f),   // look at origin
+            glm::vec3(0.0f, 1.0f, 0.0f)    // up vector
+        );
+        glm::mat4 mvp = proj * view * model;
+
+        shader.set_mat4("uMVP", mvp);
+        shader.set_vec3("uColor", glm::vec3(1.0f, 0.8f, 0.2f));
+
+
+        va.bind();
+        // Draw lines connecting points sequentially
+        // glDrawArrays(GL_LINE_STRIP, 0, pointCount);
+        // Draw points
+        glDrawArrays(GL_POINTS, 0, N * 6);
+        va.unbind();
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
 }
-
 
 
 int main(int argc, char *argv[]){
@@ -240,7 +324,8 @@ int main(int argc, char *argv[]){
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 400");
 
-    dataset_ver(window);
+    // dataset_ver(window);
+    dataset_eigen_ver(window);
 
 
     glfwTerminate();

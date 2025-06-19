@@ -144,7 +144,18 @@ void Sammon::train(){
     // 8) 更新 Y
     Y.noalias() += (2.0 * c * lr) * G;
 
-    std::cout << cnt << " " << lr << std::endl;
+    double stress = 0.0;
+    for(int i = 0; i < N - 1; ++i){
+        for(int j = i + 1; j < N; ++j){
+            double orig = dp(i, j);
+            if(orig < esp) continue;
+
+            double low = (Y.row(i) - Y.row(j)).norm();
+            stress += (orig - low) * (orig - low) / orig;
+        }
+    }
+
+    std::cout << "Iter = " << cnt << " LR = " << lr << " ERR = " << stress << std::endl;
 
     // （可选）重心平移，保持云团围绕原点
     // Eigen::RowVectorXd center = Y.colwise().mean();
