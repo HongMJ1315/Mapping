@@ -37,17 +37,14 @@ void pca(Datasets &hd, Datasets &td){
         return;
     }
 
-    // 特征向量按特征值升序排列在 solver.eigenvectors() 的列中
     Eigen::MatrixXd eigvecs = solver.eigenvectors();
 
-    // 假设 original_dim ≥ 3
     int k = td.get_feature_size();
     std::cout << k << std::endl;
-    // 最后三列是最大特征值对应的向量
+
     Eigen::MatrixXd V_k = eigvecs.rightCols(k);      // original_dim × k
     Eigen::MatrixXd Y = xc * V_k;                    // datasets_size × k
 
-    // 把投影结果写入 td
     for(int i = 0; i < datasets_size; i++){
         std::vector<double> proj(k);
         for(int j = 0; j < k; j++){

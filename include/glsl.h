@@ -23,7 +23,7 @@ public:
     GLuint ID;
 
 private:
-    static int numShaders;
+    static int num_shaders;
     char *read_source_codes(const char *filename) const{
         FILE *fptr = fopen(filename, "r");
         if(!fptr){

@@ -19,6 +19,8 @@
 
 Datasets datasets;
 
+#define DIM 2
+
 
 int width = 800, height = 600;
 void reshape(GLFWwindow *window, int w, int h){
@@ -67,10 +69,10 @@ void dataset_ver(GLFWwindow *window){
     }
 
     // Eigen::MatrixXd down_dim_data(datasets_size, 3);
-    Datasets down_dim = Datasets(datasets_size, 3);
+    Datasets down_dim = Datasets(datasets_size, DIM);
     pca(datasets, down_dim);
 
-    Sammon sammon(down_dim, 3, 500000, 0.8, 0.9, 1e-6);
+    Sammon sammon(down_dim, DIM, 500000, 0.8, 0.9, 1e-6);
 
     int pointCount = down_dim.get_size();
     int dim = down_dim.get_feature_size();  // should be 3
@@ -81,7 +83,7 @@ void dataset_ver(GLFWwindow *window){
 
     // 2. Gather vertex data
     std::vector<float> vertices;
-    vertices.reserve(pointCount * 3);
+    vertices.reserve(pointCount * DIM);
     for(int i = 0; i < pointCount; ++i){
         auto data = down_dim.get_data(i);
         for(double v : data.feature){
@@ -100,7 +102,8 @@ void dataset_ver(GLFWwindow *window){
         // 位置
         interleaved.push_back((float) d.feature[0]);
         interleaved.push_back((float) d.feature[1]);
-        interleaved.push_back((float) d.feature[2]);
+        interleaved.push_back((float) 0);
+        // interleaved.push_back((float) d.feature[2]);
         // 颜色： target == 0 -> 蓝, target == 1 -> 红
         if(d.target == 0){
             interleaved.push_back(0.0f);
@@ -140,7 +143,8 @@ void dataset_ver(GLFWwindow *window){
             // 位置
             interleaved.push_back((float) d.feature[0]);
             interleaved.push_back((float) d.feature[1]);
-            interleaved.push_back((float) d.feature[2]);
+            // interleaved.push_back((float) d.feature[2]);
+            interleaved.push_back(0);
             // 颜色： target == 0 -> 蓝, target == 1 -> 红
             if(d.target == 0){
                 interleaved.push_back(0.0f);
@@ -194,12 +198,12 @@ void dataset_eigen_ver(GLFWwindow *window){
     int N = hd.get_size();
 
     // 2. PCA to 3D
-    DatasetsEigen pca_out(N, 3);
+    DatasetsEigen pca_out(N, DIM);
     pca_eigen(hd, pca_out);
     // std::cout << "pca init done" << std::endl;
     std::cout << pca_out.get_size() << std::endl;
     // 3. Sammon mapping
-    SammonEigen sam(pca_out, 3, 10000, 0.9, 0.9, 1e-6);
+    SammonEigen sam(pca_out, DIM, 10000, 0.9, 0.9, 1e-6);
     std::cout << "sammon init done" << std::endl;
 
     // 4. Setup OpenGL objects
@@ -210,7 +214,7 @@ void dataset_eigen_ver(GLFWwindow *window){
     buf.reserve(N * 6);
     for(int i = 0; i < N; ++i){
         auto v = pca_out.get_feature().row(i).eval(); // Eigen::Vector3d
-        buf.insert(buf.end(), { float(v.x()), float(v.y()), float(v.z()) });
+        buf.insert(buf.end(), { float(v.x()), float(v.y()), float(0) });
         float t = pca_out.get_target()(i) == 0 ? 0.0f : 1.0f;
         buf.insert(buf.end(), { t, 0.0f, 1.0f - t });
     }
@@ -238,7 +242,7 @@ void dataset_eigen_ver(GLFWwindow *window){
         buf.clear();
         for(int i = 0; i < N; ++i){
             auto v = pca_out.get_feature().row(i).eval();
-            buf.insert(buf.end(), { float(v.x()), float(v.y()), float(v.z()) });
+            buf.insert(buf.end(), { float(v.x()), float(v.y()), float(0) });
             float t = pca_out.get_target()(i) == 0 ? 0.0f : 1.0f;
             buf.insert(buf.end(), { t, 0.0f, 1.0f - t });
         }

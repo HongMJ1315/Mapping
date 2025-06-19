@@ -107,41 +107,31 @@ void Sammon::train(){
 void Sammon::train(){
     if(cnt >= max_iter) return;
 
-    // 1) 准备
     Eigen::MatrixXd &Y = ori_mtx;        // N×k
     const int N = dataset_size;
     const double eps = esp;
 
-    // 2) 计算低维距离 Darr (Array) 并 clamp 到 [eps, ∞)
-    //    D2 = ‖Y‖²_i + ‖Y‖²_j - 2 Y Yᵀ
     Eigen::VectorXd r = Y.rowwise().squaredNorm();          // (N×1)
     Eigen::ArrayXXd D2 = (r.replicate(1, N)
         + r.transpose().replicate(N, 1)
         - 2.0 * (Y * Y.transpose())).array();
-    D2 = D2.max(0.0);                                        // 防止数值负
-    Eigen::ArrayXXd Darr = D2.sqrt().max(eps);               // clamp 下界
+    D2 = D2.max(0.0);                                        
+    Eigen::ArrayXXd Darr = D2.sqrt().max(eps);               
 
-    // 3) 构造掩码 valid：只在 dp_ij >= eps 才考虑
     Eigen::ArrayXXd dpArr = dp.array();                     // (N×N)
-    Eigen::ArrayXXd valid = (dpArr >= eps).cast<double>();  // 0/1 掩码
+    Eigen::ArrayXXd valid = (dpArr >= eps).cast<double>();  
 
-    // 4) 安全地做 F_ij = (dp_ij - D_ij) / (dp_ij * D_ij) ，其余置 0
-    Eigen::ArrayXXd numer = dpArr - Darr;                   // 分子
-    Eigen::ArrayXXd denom = dpArr * Darr;                   // 分母
-    // select 会在 valid(i,j)==1 时计算 numer/denom(i,j)，否则直接取 0
+    Eigen::ArrayXXd numer = dpArr - Darr;                 
+    Eigen::ArrayXXd denom = dpArr * Darr;            
     Eigen::ArrayXXd Farr = valid.select(numer / denom, 0.0);
 
-    // 5) 把 Array 转回 Matrix，并把对角清为 0（安全起见）
     Eigen::MatrixXd F = Farr.matrix();
     F.diagonal().setZero();
 
-    // 6) 计算每行的权重和 s_i
     Eigen::VectorXd s = F.rowwise().sum();                   // (N×1)
 
-    // 7) 梯度 G = diag(s) * Y - F * Y
     Eigen::MatrixXd G = s.asDiagonal() * Y - F * Y;          // (N×k)
 
-    // 8) 更新 Y
     Y.noalias() += (2.0 * c * lr) * G;
 
     double stress = 0.0;
@@ -157,11 +147,6 @@ void Sammon::train(){
 
     std::cout << "Iter = " << cnt << " LR = " << lr << " ERR = " << stress << std::endl;
 
-    // （可选）重心平移，保持云团围绕原点
-    // Eigen::RowVectorXd center = Y.colwise().mean();
-    // Y.rowwise()  -= center;
-
-    // 9) 衰减学习率、计数
     ++cnt;
     if(cnt % 50 == 0)
         lr *= alpha;

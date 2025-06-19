@@ -2,29 +2,29 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-int Shader::numShaders = 0;
+int Shader::num_shaders = 0;
 
-Shader::Shader(const char *vertexPath, const char *fragmentPath){
+Shader::Shader(const char *vertex_path, const char *fragment_path){
     ID = glCreateProgram();
 
     GLuint vert = glCreateShader(GL_VERTEX_SHADER);
     GLuint frag = glCreateShader(GL_FRAGMENT_SHADER);
 
-    char *vSrc = read_source_codes(const_cast<char *>(vertexPath));
-    char *fSrc = read_source_codes(const_cast<char *>(fragmentPath));
+    char *vert_src = read_source_codes(const_cast<char *>(vertex_path));
+    char *frag_src = read_source_codes(const_cast<char *>(fragment_path));
 
-    std::cerr << "Vertex Shader Source:\n" << vSrc << "\n";
-    glShaderSource(vert, 1, &vSrc, NULL);
+    std::cerr << "Vertex Shader Source:\n" << vert_src << "\n";
+    glShaderSource(vert, 1, &vert_src, NULL);
     glCompileShader(vert);
     print_shader_info_log(vert);
 
-    std::cerr << "Fragment Shader Source:\n" << fSrc << "\n";
-    glShaderSource(frag, 1, &fSrc, NULL);
+    std::cerr << "Fragment Shader Source:\n" << frag_src << "\n";
+    glShaderSource(frag, 1, &frag_src, NULL);
     glCompileShader(frag);
     print_shader_info_log(frag);
 
-    free(vSrc);
-    free(fSrc);
+    free(vert_src);
+    free(frag_src);
 
     glAttachShader(ID, vert);
     glAttachShader(ID, frag);
@@ -34,14 +34,14 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath){
     glDeleteShader(vert);
     glDeleteShader(frag);
 
-    numShaders++;
+    num_shaders++;
     std::cout << "Created Shader program ID = " << ID
-        << "  (total shaders: " << numShaders << ")\n";
+        << "  (total shaders: " << num_shaders << ")\n";
 }
 
 Shader::~Shader(){
     glDeleteProgram(ID);
-    numShaders--;
+    num_shaders--;
 }
 
 void Shader::set_bool(const std::string &name, bool value) const{
