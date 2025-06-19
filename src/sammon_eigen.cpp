@@ -74,7 +74,7 @@ void SammonEigen::train(){
     std::cout << "Iter = " << cnt << " LR = " << lr << " ERR = " << stress << std::endl;
 
     cnt++;
-    if(cnt % 100 == 0) lr *= alpha;
+    if(cnt % 500 == 0) lr *= alpha;
 }
 
 void SammonEigen::get_new_data(DatasetsEigen &out){

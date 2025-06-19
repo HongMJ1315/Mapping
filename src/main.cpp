@@ -203,7 +203,7 @@ void dataset_eigen_ver(GLFWwindow *window){
     // std::cout << "pca init done" << std::endl;
     std::cout << pca_out.get_size() << std::endl;
     // 3. Sammon mapping
-    SammonEigen sam(pca_out, DIM, 10000, 0.9, 0.9, 1e-6);
+    SammonEigen sam(pca_out, DIM, 10000, 1, 0.95, 1e-6);
     std::cout << "sammon init done" << std::endl;
 
     // 4. Setup OpenGL objects
